@@ -5,16 +5,11 @@ import android.os.Looper
 import okhttp3.*
 import okio.ByteString
 import org.json.JSONObject
-import androidx.compose.runtime.MutableState
-import com.synonym.androidblockexplorer.model.Block
-
+import com.synonym.androidblockexplorer.ui.screens.MainViewModel
 import org.json.JSONArray
 
 class WebSocketManager(
-    private val blockHeight: MutableState<String>,
-    private val blockData: MutableState<Block>,
-    private val isLoading: MutableState<Boolean>,
-    private val mempoolTxids: MutableState<Pair<List<String>, List<String>>>
+    private val viewModel: MainViewModel
 ) {
 
     private val client = OkHttpClient()
@@ -31,6 +26,7 @@ class WebSocketManager(
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
+                println(text)
                 handleWebSocketMessage(text)
             }
 
@@ -75,10 +71,10 @@ class WebSocketManager(
             val newBlock = BlockMapper.mapJsonToBlock(block)
 
             mainHandler.post {
-                blockHeight.value = newBlockHeight
-                blockData.value = newBlock
-                if (isLoading.value) {
-                    isLoading.value = false
+                viewModel.updateBlockHeight(newBlockHeight)
+                viewModel.updateBlockData(newBlock)
+                if (viewModel.isLoading.value == true) {
+                    viewModel.setLoading(false)
                 }
             }
         }
@@ -94,10 +90,7 @@ class WebSocketManager(
             val removedTxidList = parseTxids(removedTxids)
 
             mainHandler.post {
-                mempoolTxids.value = Pair(
-                    addedTxidList.take(10).reversed(),
-                    removedTxidList.take(10).reversed()
-                )
+                viewModel.updateMempoolTxIds(addedTxidList.take(10).reversed(), removedTxidList.take(10).reversed())
             }
         }
     }
@@ -113,4 +106,3 @@ class WebSocketManager(
         return txidList
     }
 }
-

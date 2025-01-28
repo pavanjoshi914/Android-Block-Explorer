@@ -10,15 +10,14 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 
 @Composable
-fun MempoolTransactionsList(mempoolTxIds: MutableState<Pair<List<String>, List<String>>>) {
-    val addedTxIds = mempoolTxIds.value.first
-    val removedTxIds = mempoolTxIds.value.second
+fun MempoolTransactionsList(mempoolTxIds: Pair<List<String>, List<String>>) {
+    val addedTxIds = mempoolTxIds.first
+    val removedTxIds = mempoolTxIds.second
 
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
         Text("Added Transactions", style = MaterialTheme.typography.bodyMedium)

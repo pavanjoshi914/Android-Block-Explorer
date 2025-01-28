@@ -5,68 +5,43 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.synonym.androidblockexplorer.model.Block
 import com.synonym.androidblockexplorer.ui.components.BlockCard
 import com.synonym.androidblockexplorer.ui.components.BlockDetailsLink
-import com.synonym.androidblockexplorer.websocket.WebSocketManager
-import com.synonym.androidblockexplorer.model.Block
-import com.synonym.androidblockexplorer.model.BlockExtras
-import com.synonym.androidblockexplorer.model.BlockPool
-import com.synonym.androidblockexplorer.model.TransactionDetails
-import com.synonym.androidblockexplorer.network.ApiClient
 import com.synonym.androidblockexplorer.ui.components.BlockDetailsTable
 import com.synonym.androidblockexplorer.ui.components.BlockTransactionsList
 import com.synonym.androidblockexplorer.ui.components.MempoolTransactionsList
 
 @Composable
 fun MainScreen() {
-    val blockHeight = remember { mutableStateOf("Loading...") }
-    val blockData = remember {
-        mutableStateOf(
-            Block(
-                id = "0",
-                timestamp = System.currentTimeMillis(),
-                height = 0,
-                version = 0,
-                bits = 0,
-                nonce = 0,
-                difficulty = 0.0,
-                merkle_root = "",
-                tx_count = 0,
-                size = 0,
-                weight = 0,
-                previousblockhash = "",
-                extras = BlockExtras(
-                    coinbaseRaw = "",
-                    medianFee = 0,
-                    feeRange = emptyList(),
-                    reward = 0L,
-                    totalFees = 0L,
-                    avgFee = 0,
-                    avgFeeRate = 0,
-                    pool = BlockPool(id = 0, name = "", slug = "")
-                )
-            )
-        )
-    }
-    val isLoading = remember { mutableStateOf(true) }
-    val showSection = remember { mutableStateOf("NONE") }
-    val mempoolTxIds = remember { mutableStateOf(Pair(emptyList<String>(), emptyList<String>())) }
+    val viewModel: MainViewModel = viewModel()
 
+    // Observe LiveData from ViewModel
+    val blockHeight by viewModel.blockHeight.observeAsState("Loading...")
+    val blockData by viewModel.blockData.observeAsState()
+    val isLoading by viewModel.isLoading.observeAsState(true)
+    val mempoolTxIds by viewModel.mempoolTxIds.observeAsState(Pair(emptyList(), emptyList()))
+
+    // Start the WebSocket connection
     LaunchedEffect(Unit) {
-        WebSocketManager(blockHeight, blockData, isLoading, mempoolTxIds ).start()
+        viewModel.startWebSocket()
     }
 
-    if (isLoading.value) {
+    if (isLoading) {
         CircularProgressIndicator()
     } else {
+        val showSection = remember { mutableStateOf("DETAILS") }
+
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            BlockCard(blockHeight = blockHeight.value)
+            BlockCard(blockHeight = blockHeight)
 
             BlockDetailsLink(showDetails = { showSection.value = "DETAILS" })
             BlockDetailsLink(
@@ -79,8 +54,8 @@ fun MainScreen() {
             )
 
             when (showSection.value) {
-                "DETAILS" -> BlockDetailsTable(block = blockData.value)
-                "TRANSACTIONS" -> BlockTransactionsList(blockId = blockData.value.id)
+                "DETAILS" -> blockData?.let { BlockDetailsTable(block = it) }
+                "TRANSACTIONS" -> BlockTransactionsList(blockId = blockData?.id ?: "")
                 "MEMPOOL" -> MempoolTransactionsList(mempoolTxIds)
             }
         }
