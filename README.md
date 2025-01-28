@@ -24,6 +24,10 @@ This repository is an open-source **Bitcoin Block Explorer** built for Android u
 - **Mempool Overview**: Watch live transactions that are part of the Bitcoin mempool waiting to be included in a block.
 - **Real-time Mempool Updates**: Transactions are updated in real-time as they are added or removed from the mempool.
 
+
+## Architecture
+The app utilizes WebSocket to subscribe to real-time Bitcoin block and transaction updates. It follows the ViewModel and LiveData architecture for efficient and lifecycle-conscious data management. The block and transaction data are modeled using structured data classes, ensuring a seamless flow of information between the WebSocket service, ViewModel, and UI components. This flexible and scalable design makes it easy to integrate potential improvements, such as address tracking and displaying multiple recent blocks, without affecting the core functionality.
+
 ## Potential Improvements
 
 1. **Address Tracking**
@@ -31,3 +35,4 @@ This repository is an open-source **Bitcoin Block Explorer** built for Android u
 
 2. **Show More Than One Recent Block**
     - Extend the app to show a list of multiple recent blocks instead of just the latest block. This would allow users to view the past few blocks and their related transactions in real-time.
+
