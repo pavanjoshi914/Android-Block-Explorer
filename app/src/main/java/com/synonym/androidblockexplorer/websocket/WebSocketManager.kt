@@ -64,18 +64,31 @@ class WebSocketManager(
     }
 
     private fun handleBlocksData(responseJson: JSONObject) {
+        // First, check for the "blocks" array (initial response)
         val blocksArray = responseJson.optJSONArray("blocks")
         if (blocksArray != null && blocksArray.length() > 0) {
+            // Process the blocks array if it exists
             val block = blocksArray.getJSONObject(blocksArray.length() - 1)
-            val newBlockHeight = block.optInt("height", -1).takeIf { it != -1 }?.toString() ?: "Unknown"
-            val newBlock = BlockMapper.mapJsonToBlock(block)
 
+            val newBlock = BlockMapper.mapJsonToBlock(block)
             mainHandler.post {
-                viewModel.updateBlockHeight(newBlockHeight)
+                viewModel.updateBlockHeight(block.optInt("height").toString())
                 viewModel.updateBlockData(newBlock)
                 if (viewModel.isLoading.value == true) {
                     viewModel.setLoading(false)
                 }
+            }
+        }
+
+        // Now, check for the "block" object (real-time update)
+        val singleBlock = responseJson.optJSONObject("block")
+        if (singleBlock != null) {
+            // Process the single block if it exists
+            val newBlock = BlockMapper.mapJsonToBlock(singleBlock)
+
+            mainHandler.post {
+                viewModel.updateBlockHeight(singleBlock.optInt("height").toString())
+                viewModel.updateBlockData(newBlock)
             }
         }
     }
